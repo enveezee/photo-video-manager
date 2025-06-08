@@ -125,6 +125,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.overlay = None
         self.video_player = None
         self.video_widget = None
+        self.show_hidden_files = False  # Track hidden files visibility
+        self.showMaximized()  # Start the program maximized
 
         # Add "Back to Thumbnails" button to toolbar
         self.actionBack = QAction(QIcon(), "Back", self)
@@ -147,6 +149,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.comboBoxLocation.activated.connect(self.on_location_selected)
         self.comboBoxLocation.lineEdit().returnPressed.connect(self.on_location_entered)
         self.listWidgetDirs.itemDoubleClicked.connect(self.on_dir_selected)
+        self.listWidgetDirs.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.listWidgetDirs.customContextMenuRequested.connect(self.on_filebrowser_context_menu)
         self.populate_dir_list()
         self.populate_thumbnails()
 
@@ -160,9 +164,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def populate_dir_list(self):
         self.listWidgetDirs.clear()
+        # Add parent directory entry
+        if os.path.dirname(self.current_dir) != self.current_dir:
+            self.listWidgetDirs.addItem("../")
         try:
             dirs = [d for d in os.listdir(self.current_dir)
                     if os.path.isdir(os.path.join(self.current_dir, d))]
+            # Hide hidden files unless show_hidden_files is True
+            if not self.show_hidden_files:
+                dirs = [d for d in dirs if not d.startswith('.')]
             dirs.sort()
             for d in dirs:
                 self.listWidgetDirs.addItem(d)
@@ -303,9 +313,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.change_directory(path)
 
     def on_dir_selected(self, item):
-        new_dir = os.path.join(self.current_dir, item.text())
+        text = item.text()
+        if text == "../":
+            new_dir = os.path.dirname(self.current_dir)
+        else:
+            new_dir = os.path.join(self.current_dir, text)
         if os.path.isdir(new_dir):
             self.change_directory(new_dir)
+
+    def on_filebrowser_context_menu(self, pos):
+        menu = QMenu(self)
+        toggle_action = QAction(
+            "Show Hidden Files" if not self.show_hidden_files else "Hide Hidden Files", self)
+        menu.addAction(toggle_action)
+        toggle_action.triggered.connect(self.toggle_hidden_files)
+        menu.exec(self.listWidgetDirs.mapToGlobal(pos))
+
+    def toggle_hidden_files(self):
+        self.show_hidden_files = not self.show_hidden_files
+        self.populate_dir_list()
 
     def change_directory(self, path):
         if os.path.isdir(path):
