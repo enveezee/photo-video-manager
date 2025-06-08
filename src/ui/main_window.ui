@@ -3,26 +3,56 @@
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <widget class="QToolBar" name="toolBar">
-     <action name="actionOpen" text="Open" />
-     <action name="actionSave" text="Save" />
-     <action name="actionEdit" text="Edit" />
-    </widget>
-    <widget class="QTabWidget" name="tabWidget">
-     <widget class="QWidget" name="tabPhotos">
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <widget class="QListView" name="listViewPhotos" />
-      </layout>
+   <layout class="QVBoxLayout" name="mainVerticalLayout">
+    <!-- Location bar -->
+    <item>
+     <layout class="QHBoxLayout" name="locationBarLayout">
+      <item>
+       <widget class="QComboBox" name="comboBoxLocation">
+        <property name="editable">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <!-- Directory browser -->
+    <item>
+     <widget class="QListWidget" name="listWidgetDirs">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumHeight">
+       <number>100</number>
+      </property>
+      <property name="maximumHeight">
+       <number>150</number>
+      </property>
      </widget>
-     <widget class="QWidget" name="tabVideos">
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <widget class="QListView" name="listViewVideos" />
-      </layout>
+    </item>
+    <!-- Scrollable grid of thumbnails -->
+    <item>
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <layout class="QGridLayout" name="gridLayoutThumbnails"/>
+      </widget>
      </widget>
-    </widget>
+    </item>
    </layout>
   </widget>
+  <widget class="QToolBar" name="toolBar"/>
   <action name="actionOpen" />
   <action name="actionSave" />
   <action name="actionEdit" />
