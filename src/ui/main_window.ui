@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <widget class="QToolBar" name="toolBar">
+     <action name="actionOpen" text="Open" />
+     <action name="actionSave" text="Save" />
+     <action name="actionEdit" text="Edit" />
+    </widget>
+    <widget class="QTabWidget" name="tabWidget">
+     <widget class="QWidget" name="tabPhotos">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <widget class="QListView" name="listViewPhotos" />
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabVideos">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <widget class="QListView" name="listViewVideos" />
+      </layout>
+     </widget>
+    </widget>
+   </layout>
+  </widget>
+  <action name="actionOpen" />
+  <action name="actionSave" />
+  <action name="actionEdit" />
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

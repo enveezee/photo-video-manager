@@ -1,0 +1,6 @@
+PyQt6
+lxml
+jsonschema
+Pillow
+opencv-python
+numpy
