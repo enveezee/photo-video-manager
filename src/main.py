@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout,
-    QSlider, QPushButton, QStyle, QFrame, QLineEdit, QMenu
+    QSlider, QPushButton, QStyle, QFrame, QLineEdit, QMenu, QDialog
 )
 from PyQt6.QtGui import QPixmap, QAction, QIcon, QMouseEvent
 from PyQt6.QtCore import Qt, QSize, QTimer
@@ -82,37 +82,48 @@ class OverlayWidget(QWidget):
         self.slider.setValue(self.slider_values[self.active_index])
         self.slider.setEnabled(self.toggles[self.active_index])
 
-class SettingsDialog(QWidget):
-    def __init__(self, config, parent=None):
+class SettingsDialog(QDialog):  # Change QWidget to QDialog
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.config = config
+        from config import load_config, set_config_value
+        self.config = load_config()
         layout = QVBoxLayout(self)
         # Thumbnail size
         self.thumb_slider = QSlider(Qt.Orientation.Horizontal)
         self.thumb_slider.setRange(32, 512)
         self.thumb_slider.setValue(self.config.get("thumbnail_size", 128))
+        self.thumb_slider.valueChanged.connect(self.on_thumb_size_changed)
         layout.addWidget(QLabel("Thumbnail Size"))
         layout.addWidget(self.thumb_slider)
         # Supported file types
         self.img_types = QLineEdit(", ".join(self.config.get("supported_image_types", [])))
+        self.img_types.editingFinished.connect(self.on_img_types_changed)
         self.vid_types = QLineEdit(", ".join(self.config.get("supported_video_types", [])))
+        self.vid_types.editingFinished.connect(self.on_vid_types_changed)
         layout.addWidget(QLabel("Image Types (comma separated)"))
         layout.addWidget(self.img_types)
         layout.addWidget(QLabel("Video Types (comma separated)"))
         layout.addWidget(self.vid_types)
-        # Save button
-        save_btn = QPushButton("Save")
-        save_btn.clicked.connect(self.save)
-        layout.addWidget(save_btn)
+        # Close button
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
         self.setLayout(layout)
 
-    def save(self):
-        self.config["thumbnail_size"] = self.thumb_slider.value()
-        self.config["supported_image_types"] = [s.strip() for s in self.img_types.text().split(",")]
-        self.config["supported_video_types"] = [s.strip() for s in self.vid_types.text().split(",")]
-        save_config(self.config)
-        self.close()
+    def on_thumb_size_changed(self, value):
+        from config import set_config_value
+        set_config_value("thumbnail_size", value)
+
+    def on_img_types_changed(self):
+        from config import set_config_value
+        types = [s.strip() for s in self.img_types.text().split(",") if s.strip()]
+        set_config_value("supported_image_types", types)
+
+    def on_vid_types_changed(self):
+        from config import set_config_value
+        types = [s.strip() for s in self.vid_types.text().split(",") if s.strip()]
+        set_config_value("supported_video_types", types)
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -160,8 +171,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.menu.exec(self.toolBar.mapToGlobal(self.toolBar.actionGeometry(self.hamburger).bottomLeft()))
 
     def open_settings(self):
-        dlg = SettingsDialog(self.config, self)
-        dlg.show()
+        dlg = SettingsDialog(self)
+        dlg.exec()
 
     def populate_dir_list(self):
         self.listWidgetDirs.clear()

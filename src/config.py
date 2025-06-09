@@ -8,9 +8,13 @@ DEFAULT_CONFIG = {
     "default_directory": os.path.expanduser("~")
 }
 
-CONFIG_PATH = os.path.expanduser("~/.photo_video_manager_config.json")
+CONFIG_PATH = os.path.expanduser("~/.config/pixelporter/p3_config.json")
+_config_cache = None
 
 def load_config():
+    global _config_cache
+    if _config_cache is not None:
+        return _config_cache
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r") as f:
@@ -19,14 +23,25 @@ def load_config():
                 for k, v in DEFAULT_CONFIG.items():
                     if k not in config:
                         config[k] = v
+                _config_cache = config
                 return config
         except Exception:
             pass
-    return DEFAULT_CONFIG.copy()
+    _config_cache = DEFAULT_CONFIG.copy()
+    return _config_cache
 
-def save_config(config):
+def save_config(config=None):
+    global _config_cache
+    if config is None:
+        config = _config_cache
     try:
         with open(CONFIG_PATH, "w") as f:
             json.dump(config, f, indent=4)
+        _config_cache = config
     except Exception as e:
         print(f"Failed to save config: {e}")
+
+def set_config_value(key, value):
+    config = load_config()
+    config[key] = value
+    save_config(config)
