@@ -2,7 +2,7 @@ import sys
 import os
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout,
-    QSlider, QPushButton, QStyle, QFrame, QLineEdit, QMenu, QDialog
+    QSlider, QPushButton, QStyle, QFrame, QLineEdit, QMenu, QDialog, QSizePolicy, QSplitter
 )
 from PyQt6.QtGui import QPixmap, QAction, QIcon, QMouseEvent
 from PyQt6.QtCore import Qt, QSize, QTimer
@@ -10,6 +10,7 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from ui.main_window import Ui_MainWindow
 from config import load_config, save_config, DEFAULT_CONFIG
+from utils.file_utils import is_image_file, is_video_file
 
 THUMB_SIZE = 128
 
@@ -137,14 +138,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.overlay = None
         self.video_player = None
         self.video_widget = None
-        self.show_hidden_files = False  # Track hidden files visibility
-        self.showMaximized()  # Start the program maximized
+        self.show_hidden_files = False
+        self.showMaximized()
+
+        # --- Replace only the lower part with a splitter ---
+        # Remove widgets from the old layout
+        self.mainVerticalLayout.removeWidget(self.listWidgetDirs)
+        self.mainVerticalLayout.removeWidget(self.scrollArea)
+        self.listWidgetDirs.setParent(None)
+        self.scrollArea.setParent(None)
+
+        # Create splitter for file browser and thumbnail gallery
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.addWidget(self.listWidgetDirs)
+        self.splitter.addWidget(self.scrollArea)
+        self.splitter.setSizes([150, 600])
+
+        # Insert the splitter below the location bar (which is at index 0)
+        self.mainVerticalLayout.insertWidget(1, self.splitter)
+        # ---------------------------------------
 
         # Add "Back to Thumbnails" button to toolbar
         self.actionBack = QAction(QIcon(), "Back", self)
         self.toolBar.addAction(self.actionBack)
         self.actionBack.triggered.connect(self.show_thumbnail_view)
         self.actionBack.setVisible(False)
+
+        # --- Add this block to push following actions to the right ---
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.toolBar.addWidget(spacer)
+        # ------------------------------------------------------------
 
         # Hamburger menu
         self.menu = QMenu()
@@ -197,16 +221,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-        img_types = tuple(self.config.get("supported_image_types", DEFAULT_CONFIG["supported_image_types"]))
-        vid_types = tuple(self.config.get("supported_video_types", DEFAULT_CONFIG["supported_video_types"]))
         thumb_size = self.config.get("thumbnail_size", DEFAULT_CONFIG["thumbnail_size"])
         try:
             self.file_list = [f for f in os.listdir(self.current_dir)
-                              if f.lower().endswith(img_types + vid_types)]
+                              if is_image_file(f) or is_video_file(f)]
         except Exception as e:
             self.statusBar().showMessage(f"Error reading directory: {e}", 3000)
             self.file_list = []
             return
+
+        # Set minimal spacing for a tight grid
+        layout.setHorizontalSpacing(4)
+        layout.setVerticalSpacing(4)
+        layout.setContentsMargins(4, 4, 4, 4)
+
+        # Dynamically calculate columns based on available width
+        area_width = self.scrollArea.viewport().width()
+        columns = max(1, area_width // (thumb_size + 8))  # 8 for spacing/margin
+
         row, col = 0, 0
         for idx, fname in enumerate(self.file_list):
             thumb = QLabel()
@@ -214,11 +246,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             thumb.setAlignment(Qt.AlignmentFlag.AlignCenter)
             thumb.setStyleSheet("border: 1px solid #888; background: #222;")
             try:
-                if fname.lower().endswith(img_types):
+                if is_image_file(fname):
                     pixmap = QPixmap(os.path.join(self.current_dir, fname)).scaled(
                         thumb_size, thumb_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                     thumb.setPixmap(pixmap)
-                else:
+                elif is_video_file(fname):
                     thumb.setText("🎬")
                     thumb.setStyleSheet("font-size: 48px; border: 1px solid #888; background: #222; color: #fff;")
             except Exception as e:
@@ -227,18 +259,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             thumb.mousePressEvent = lambda e, idx=idx: self.show_single_file_view(idx)
             layout.addWidget(thumb, row, col)
             col += 1
-            if col >= 5:
+            if col >= columns:
                 col = 0
                 row += 1
 
     def show_single_file_view(self, idx):
         fname = self.file_list[idx]
         full_path = os.path.join(self.current_dir, fname)
-        self.scrollArea.hide()
-        if self.single_view_widget:
-            self.single_view_widget.setParent(None)
-            self.single_view_widget.deleteLater()
-            self.single_view_widget = None
+
+        # Remove the current lower widget (either scrollArea or previous single_view_widget)
+        if self.splitter.count() > 1:
+            widget = self.splitter.widget(1)
+            widget.setParent(None)
         if self.overlay:
             self.overlay.setParent(None)
             self.overlay.deleteLater()
@@ -251,23 +283,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.video_widget.setParent(None)
             self.video_widget.deleteLater()
             self.video_widget = None
+        self.single_view_widget = None
 
-        if fname.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif')):
+        if is_image_file(fname):
             label = QLabel()
-            try:
-                pixmap = QPixmap(full_path).scaled(
-                    self.centralwidget.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                label.setPixmap(pixmap)
-            except Exception as e:
-                label.setText(f"Error loading image: {e}")
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             label.setStyleSheet("background: #111;")
             label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             label.customContextMenuRequested.connect(lambda pos, path=full_path: self.open_context_menu(pos, path))
             self.single_view_widget = label
-            self.mainVerticalLayout.addWidget(self.single_view_widget)
-        else:
-            # Video preview
+
+            def resize_pixmap():
+                pixmap = QPixmap(full_path)
+                if not pixmap.isNull():
+                    scaled = pixmap.scaled(
+                        label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    label.setPixmap(scaled)
+            label.resizeEvent = lambda event: resize_pixmap()
+            resize_pixmap()
+            self.splitter.insertWidget(1, self.single_view_widget)
+        elif is_video_file(fname):
             self.video_widget = QVideoWidget()
             self.video_player = QMediaPlayer()
             audio_output = QAudioOutput()
@@ -278,7 +313,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.video_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             self.video_widget.customContextMenuRequested.connect(lambda pos, path=full_path: self.open_context_menu(pos, path))
             self.single_view_widget = self.video_widget
-            self.mainVerticalLayout.addWidget(self.single_view_widget)
+            self.splitter.insertWidget(1, self.single_view_widget)
+            # QVideoWidget automatically scales video to fit its area
+        else:
+            return  # Not supported
 
         # Overlay editing UI
         self.overlay = OverlayWidget(self.single_view_widget)
@@ -296,10 +334,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return super().eventFilter(obj, event)
 
     def show_thumbnail_view(self):
-        if self.single_view_widget:
-            self.single_view_widget.setParent(None)
-            self.single_view_widget.deleteLater()
-            self.single_view_widget = None
+        if self.splitter.count() > 1:
+            widget = self.splitter.widget(1)
+            widget.setParent(None)
         if self.overlay:
             self.overlay.setParent(None)
             self.overlay.deleteLater()
@@ -312,6 +349,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.video_widget.setParent(None)
             self.video_widget.deleteLater()
             self.video_widget = None
+        self.single_view_widget = None
+        self.splitter.insertWidget(1, self.scrollArea)
         self.scrollArea.show()
         self.actionBack.setVisible(False)
 
@@ -386,6 +425,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     os.startfile(path)
         except Exception as e:
             self.statusBar().showMessage(f"Failed to open: {e}", 3000)
+
+    def resizeEvent(self, event):
+        # Repopulate thumbnails on resize for responsive grid
+        if hasattr(self, "gridLayoutThumbnails"):
+            self.populate_thumbnails()
+        super().resizeEvent(event)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

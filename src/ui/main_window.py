@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'ui/main_window.ui'
+# Form implementation generated from reading ui file 'src/ui/main_window.ui'
 #
 # Created by: PyQt6 UI code generator 6.9.1
 #
@@ -35,7 +35,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.listWidgetDirs.sizePolicy().hasHeightForWidth())
         self.listWidgetDirs.setSizePolicy(sizePolicy)
         self.listWidgetDirs.setMinimumHeight(100)
-        self.listWidgetDirs.setMaximumHeight(150)
         self.listWidgetDirs.setObjectName("listWidgetDirs")
         self.mainVerticalLayout.addWidget(self.listWidgetDirs)
         self.scrollArea = QtWidgets.QScrollArea(parent=self.centralwidget)

@@ -34,9 +34,6 @@
       <property name="minimumHeight">
        <number>100</number>
       </property>
-      <property name="maximumHeight">
-       <number>150</number>
-      </property>
      </widget>
     </item>
     <!-- Scrollable grid of thumbnails -->

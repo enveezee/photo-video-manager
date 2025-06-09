@@ -1,9 +1,13 @@
+from config import load_config, DEFAULT_CONFIG
+
 def is_image_file(file_path):
-    image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']
+    config = load_config()
+    image_extensions = config.get("supported_image_types", DEFAULT_CONFIG["supported_image_types"])
     return any(file_path.lower().endswith(ext) for ext in image_extensions)
 
 def is_video_file(file_path):
-    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv']
+    config = load_config()
+    video_extensions = config.get("supported_video_types", DEFAULT_CONFIG["supported_video_types"])
     return any(file_path.lower().endswith(ext) for ext in video_extensions)
 
 def validate_file_path(file_path):
