@@ -1,50 +1,42 @@
-# Photo and Video Manager
+# Python Pixel Porter (P³)
 
-This project is a cross-platform application for managing photos and videos, featuring non-destructive editing capabilities. Modifications are stored in XML or JSON format, allowing users to maintain the integrity of their original media files while applying various edits.
+Python Pixel Porter (P³) is a modern photo and video manager for organizing, viewing, and editing your media collections with ease.
 
 ## Features
 
-- **Photo Management**: Load, edit, and save photos with non-destructive editing.
-- **Video Management**: Load, edit, and save videos with non-destructive editing.
-- **Non-Destructive Editing**: Edits are stored separately, allowing for easy reversion and modification.
-- **Cross-Platform**: Built using Qt6, ensuring compatibility across different operating systems.
+- Fast thumbnail grid for images and videos
+- Simple non-destructive editing tools (brightness, contrast, saturation overlays)
+- Open files in external viewer or editor
 
 ## Installation
 
-1. Clone the repository:
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/nvz/python-pixel-porter.git
+   cd python-pixel-porter
    ```
-   git clone https://github.com/yourusername/photo-video-manager.git
-   ```
-2. Navigate to the project directory:
-   ```
-   cd photo-video-manager
-   ```
-3. Install the required dependencies:
-   ```
+
+2. Install dependencies:
+
+   ```bash
    pip install -r requirements.txt
+   ```
+
+3. Run the application:
+
+   ```bash
+   python src/main.py
    ```
 
 ## Usage
 
-To run the application, execute the following command:
-```
-python src/main.py
-```
+- Browse your media folders using the location bar or directory list.
+- Double-click a folder to enter, or use the "../" entry to go up.
+- Right-click the folder list to show/hide hidden files.
+- Click thumbnails to view images/videos in detail.
+- Use the toolbar for settings and navigation.
 
-## Project Structure
+## About
 
-- `src/main.py`: Entry point of the application.
-- `src/ui/main_window.ui`: UI layout for the main application window.
-- `src/models/`: Contains classes for managing photo and video data.
-- `src/controllers/`: Manages interactions between the UI and models.
-- `src/editors/`: Provides editing functionalities for photos and videos.
-- `src/storage/`: Handles reading and writing of edit metadata in XML and JSON formats.
-- `src/utils/`: Utility functions for file operations.
-
-## Contributing
-
-Contributions are welcome! Please submit a pull request or open an issue for any enhancements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+Python Pixel Porter (P³) was created using VSCode, GitHub, and Copilot.

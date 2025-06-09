@@ -1,8 +1,14 @@
+[project]
+name = "python-pixel-porter"
+description = "Python Pixel Porter (P³): A photo and video manager for organizing, viewing, and editing your media."
+authors = ["enveezee <https://github.com/enveezee>"]
+license = "MIT"
+
 [tool.poetry]
-name = "photo-video-manager"
+name = "python-pixel-porter"
 version = "0.1.0"
-description = "A cross-platform application for managing photos and videos with non-destructive editing."
-authors = ["Your Name <youremail@example.com>"]
+description = "Python Pixel Porter (P³): A photo and video manager for organizing, viewing, and editing your media."
+authors = ["enveezee <https://github.com/enveezee>"]
 license = "MIT"
 
 [tool.poetry.dependencies]

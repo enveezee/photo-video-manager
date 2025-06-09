@@ -119,6 +119,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.config = load_config()
         self.setupUi(self)
+        self.setWindowTitle("Python Pixel Porter (P³)")
         self.current_dir = self.config.get("default_directory", os.path.expanduser("~"))
         self.file_list = []
         self.single_view_widget = None

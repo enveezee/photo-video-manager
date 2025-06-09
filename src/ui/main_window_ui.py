@@ -63,3 +63,5 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         pass
+
+# UI for Python Pixel Porter (P³)
