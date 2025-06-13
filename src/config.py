@@ -2,8 +2,8 @@ import json
 import os
 
 DEFAULT_CONFIG = {
-    "supported_image_types": [".jpg", ".jpeg", ".png", ".bmp", ".gif"],
-    "supported_video_types": [".mp4", ".mov", ".avi"],
+    "supported_image_types": [".avif", ".bmp", ".gif", ".heic", ".jpg", ".jpeg", ".png", ".tiff", ".webp"],
+    "supported_video_types": [".3gp", ".avi", ".flv", ".m4v",  ".mkv", ".mov", ".mp4", ".mpg", ".mpeg",  ".wmv"],
     "thumbnail_size": 128,
     "default_directory": os.path.expanduser("~")
 }
@@ -27,6 +27,8 @@ def load_config():
                 return config
         except Exception:
             pass
+    else:
+        os.makedirs(os.path.dirname(CONFIG_PATH))
     _config_cache = DEFAULT_CONFIG.copy()
     return _config_cache
 

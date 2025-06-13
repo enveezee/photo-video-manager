@@ -9,10 +9,9 @@ from PyQt6.QtCore import Qt, QSize, QTimer
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from ui.main_window import Ui_MainWindow
-from config import load_config, save_config, DEFAULT_CONFIG
+from config import load_config, DEFAULT_CONFIG
 from utils.file_utils import is_image_file, is_video_file
 
-THUMB_SIZE = 128
 
 class OverlayWidget(QWidget):
     """Overlay with icon tabs, slider, and toggle logic."""
@@ -87,7 +86,6 @@ class SettingsDialog(QDialog):  # Change QWidget to QDialog
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        from config import load_config, set_config_value
         self.config = load_config()
         layout = QVBoxLayout(self)
         # Thumbnail size
@@ -237,7 +235,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Dynamically calculate columns based on available width
         area_width = self.scrollArea.viewport().width()
-        columns = max(1, area_width // (thumb_size + 8))  # 8 for spacing/margin
+        columns = max(1, area_width // (thumb_size + 8))  #! 8 for spacing/margin, make configurable
 
         row, col = 0, 0
         for idx, fname in enumerate(self.file_list):
