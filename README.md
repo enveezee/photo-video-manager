@@ -4,9 +4,10 @@ Python Pixel Porter (P³) is a modern photo and video manager for organizing, vi
 
 ## Features
 
-- Fast thumbnail grid for images and videos
-- Simple non-destructive editing tools (brightness, contrast, saturation overlays)
-- Open files in external viewer or editor
+- Customizable UI
+- Simple non-destructive editing tools
+- Slideshow functionality
+- Thumbnail grid for images and videos
 
 ## Installation
 

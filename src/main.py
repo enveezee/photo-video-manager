@@ -1,128 +1,18 @@
-import sys
-import os
+import os, sys
+
+from PyQt6.QtCore import Qt, QSize, QTimer
+from PyQt6.QtGui import QPixmap, QAction, QIcon, QMouseEvent
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimediaWidgets import QVideoWidget
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QLabel, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout,
     QSlider, QPushButton, QStyle, QFrame, QLineEdit, QMenu, QDialog, QSizePolicy, QSplitter
 )
-from PyQt6.QtGui import QPixmap, QAction, QIcon, QMouseEvent
-from PyQt6.QtCore import Qt, QSize, QTimer
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PyQt6.QtMultimediaWidgets import QVideoWidget
-from ui.main_window import Ui_MainWindow
+
 from config import load_config, DEFAULT_CONFIG
+from ui.main_window import Ui_MainWindow
 from utils.file_utils import is_image_file, is_video_file
 
-
-class OverlayWidget(QWidget):
-    """Overlay with icon tabs, slider, and toggle logic."""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setStyleSheet("background: rgba(0,0,0,0.3);")
-        self.setMouseTracking(True)
-        self.icons = ["brightness", "contrast", "saturation"]
-        self.icon_buttons = []
-        self.sliders = []
-        self.active_index = 0
-        self.slider_values = [50, 50, 50]
-        self.toggles = [False, False, False]
-        self.init_ui()
-        self.hide_timer = QTimer(self)
-        self.hide_timer.setInterval(1500)
-        self.hide_timer.timeout.connect(self.hide)
-        self.hide()
-
-    def init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
-        icon_row = QHBoxLayout()
-        for i, icon in enumerate(self.icons):
-            btn = QPushButton()
-            btn.setIcon(self.style().standardIcon(getattr(QStyle.StandardPixmap, f"SP_DialogYesButton")))
-            btn.setCheckable(True)
-            btn.setToolTip(icon.capitalize())
-            btn.setFixedSize(48, 48)
-            btn.clicked.connect(lambda checked, idx=i: self.toggle_tab(idx))
-            self.icon_buttons.append(btn)
-            icon_row.addWidget(btn)
-        layout.addLayout(icon_row)
-        self.slider = QSlider(Qt.Orientation.Horizontal)
-        self.slider.setRange(0, 100)
-        self.slider.setValue(50)
-        self.slider.valueChanged.connect(self.slider_changed)
-        layout.addWidget(self.slider)
-        self.setLayout(layout)
-
-    def showEvent(self, event):
-        self.hide_timer.start()
-
-    def enterEvent(self, event):
-        self.hide_timer.stop()
-        self.show()
-
-    def leaveEvent(self, event):
-        self.hide_timer.start()
-
-    def toggle_tab(self, idx):
-        self.toggles[idx] = not self.toggles[idx]
-        self.icon_buttons[idx].setChecked(self.toggles[idx])
-        self.active_index = idx
-        self.slider.setValue(self.slider_values[idx])
-        self.slider.setEnabled(self.toggles[idx])
-        # TODO: Update file preview and metadata here
-
-    def slider_changed(self, value):
-        self.slider_values[self.active_index] = value
-        # TODO: Update file preview and metadata here
-
-    def update_overlay(self):
-        for i, btn in enumerate(self.icon_buttons):
-            btn.setChecked(self.toggles[i])
-        self.slider.setValue(self.slider_values[self.active_index])
-        self.slider.setEnabled(self.toggles[self.active_index])
-
-class SettingsDialog(QDialog):  # Change QWidget to QDialog
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Settings")
-        self.config = load_config()
-        layout = QVBoxLayout(self)
-        # Thumbnail size
-        self.thumb_slider = QSlider(Qt.Orientation.Horizontal)
-        self.thumb_slider.setRange(32, 512)
-        self.thumb_slider.setValue(self.config.get("thumbnail_size", 128))
-        self.thumb_slider.valueChanged.connect(self.on_thumb_size_changed)
-        layout.addWidget(QLabel("Thumbnail Size"))
-        layout.addWidget(self.thumb_slider)
-        # Supported file types
-        self.img_types = QLineEdit(", ".join(self.config.get("supported_image_types", [])))
-        self.img_types.editingFinished.connect(self.on_img_types_changed)
-        self.vid_types = QLineEdit(", ".join(self.config.get("supported_video_types", [])))
-        self.vid_types.editingFinished.connect(self.on_vid_types_changed)
-        layout.addWidget(QLabel("Image Types (comma separated)"))
-        layout.addWidget(self.img_types)
-        layout.addWidget(QLabel("Video Types (comma separated)"))
-        layout.addWidget(self.vid_types)
-        # Close button
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.accept)
-        layout.addWidget(close_btn)
-        self.setLayout(layout)
-
-    def on_thumb_size_changed(self, value):
-        from config import set_config_value
-        set_config_value("thumbnail_size", value)
-
-    def on_img_types_changed(self):
-        from config import set_config_value
-        types = [s.strip() for s in self.img_types.text().split(",") if s.strip()]
-        set_config_value("supported_image_types", types)
-
-    def on_vid_types_changed(self):
-        from config import set_config_value
-        types = [s.strip() for s in self.vid_types.text().split(",") if s.strip()]
-        set_config_value("supported_video_types", types)
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -429,6 +319,120 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if hasattr(self, "gridLayoutThumbnails"):
             self.populate_thumbnails()
         super().resizeEvent(event)
+
+
+class OverlayWidget(QWidget):
+    """Overlay with icon tabs, slider, and toggle logic."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setStyleSheet("background: rgba(0,0,0,0.3);")
+        self.setMouseTracking(True)
+        self.icons = ["brightness", "contrast", "saturation"]
+        self.icon_buttons = []
+        self.sliders = []
+        self.active_index = 0
+        self.slider_values = [50, 50, 50]
+        self.toggles = [False, False, False]
+        self.init_ui()
+        self.hide_timer = QTimer(self)
+        self.hide_timer.setInterval(1500)
+        self.hide_timer.timeout.connect(self.hide)
+        self.hide()
+
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(40, 40, 40, 40)
+        icon_row = QHBoxLayout()
+        for i, icon in enumerate(self.icons):
+            btn = QPushButton()
+            btn.setIcon(self.style().standardIcon(getattr(QStyle.StandardPixmap, f"SP_DialogYesButton")))
+            btn.setCheckable(True)
+            btn.setToolTip(icon.capitalize())
+            btn.setFixedSize(48, 48)
+            btn.clicked.connect(lambda checked, idx=i: self.toggle_tab(idx))
+            self.icon_buttons.append(btn)
+            icon_row.addWidget(btn)
+        layout.addLayout(icon_row)
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        self.slider.setRange(0, 100)
+        self.slider.setValue(50)
+        self.slider.valueChanged.connect(self.slider_changed)
+        layout.addWidget(self.slider)
+        self.setLayout(layout)
+
+    def showEvent(self, event):
+        self.hide_timer.start()
+
+    def enterEvent(self, event):
+        self.hide_timer.stop()
+        self.show()
+
+    def leaveEvent(self, event):
+        self.hide_timer.start()
+
+    def toggle_tab(self, idx):
+        self.toggles[idx] = not self.toggles[idx]
+        self.icon_buttons[idx].setChecked(self.toggles[idx])
+        self.active_index = idx
+        self.slider.setValue(self.slider_values[idx])
+        self.slider.setEnabled(self.toggles[idx])
+        # TODO: Update file preview and metadata here
+
+    def slider_changed(self, value):
+        self.slider_values[self.active_index] = value
+        # TODO: Update file preview and metadata here
+
+    def update_overlay(self):
+        for i, btn in enumerate(self.icon_buttons):
+            btn.setChecked(self.toggles[i])
+        self.slider.setValue(self.slider_values[self.active_index])
+        self.slider.setEnabled(self.toggles[self.active_index])
+
+
+class SettingsDialog(QDialog):  # Change QWidget to QDialog
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.config = load_config()
+        layout = QVBoxLayout(self)
+        # Thumbnail size
+        self.thumb_slider = QSlider(Qt.Orientation.Horizontal)
+        self.thumb_slider.setRange(32, 512)
+        self.thumb_slider.setValue(self.config.get("thumbnail_size", 128))
+        self.thumb_slider.valueChanged.connect(self.on_thumb_size_changed)
+        layout.addWidget(QLabel("Thumbnail Size"))
+        layout.addWidget(self.thumb_slider)
+        # Supported file types
+        self.img_types = QLineEdit(", ".join(self.config.get("supported_image_types", [])))
+        self.img_types.editingFinished.connect(self.on_img_types_changed)
+        self.vid_types = QLineEdit(", ".join(self.config.get("supported_video_types", [])))
+        self.vid_types.editingFinished.connect(self.on_vid_types_changed)
+        layout.addWidget(QLabel("Image Types (comma separated)"))
+        layout.addWidget(self.img_types)
+        layout.addWidget(QLabel("Video Types (comma separated)"))
+        layout.addWidget(self.vid_types)
+        # Close button
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
+        self.setLayout(layout)
+
+    def on_thumb_size_changed(self, value):
+        from config import set_config_value
+        set_config_value("thumbnail_size", value)
+
+    def on_img_types_changed(self):
+        from config import set_config_value
+        types = [s.strip() for s in self.img_types.text().split(",") if s.strip()]
+        set_config_value("supported_image_types", types)
+
+    def on_vid_types_changed(self):
+        from config import set_config_value
+        types = [s.strip() for s in self.vid_types.text().split(",") if s.strip()]
+        set_config_value("supported_video_types", types)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
